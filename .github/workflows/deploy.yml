@@ -1,0 +1,140 @@
+# .github/workflows/deploy.yml
+name: CI/CD - Multi-Service Monorepo Deploy to EKS
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'back-Despachos_SpringBoot/**'
+      - 'back-Ventas_SpringBoot/**'
+      - 'front_despacho/**'
+      - 'infraestructura/**'
+      - '.github/workflows/deploy.yml'
+
+env:
+  AWS_REGION: us-east-1
+  ECR_DESPACHOS_REPO: innovatech-backend-despachos
+  ECR_VENTAS_REPO: innovatech-backend-ventas
+  ECR_FRONTEND_REPO: innovatech-frontend
+  EKS_CLUSTER_NAME: innovatech-cluster
+  NAMESPACE: innovatech
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  # Job 1: Build y Deploy de Despachos (Solo si cambió su carpeta)
+  deploy-despachos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurar credenciales AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::<AWS_ACCOUNT_ID>:role/github-actions-eks-deploy
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Login en Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build y push imagen Backend Despachos
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $REGISTRY/$ECR_DESPACHOS_REPO:$IMAGE_TAG ./back-Despachos_SpringBoot
+          docker push $REGISTRY/$ECR_DESPACHOS_REPO:$IMAGE_TAG
+      - name: Actualizar kubeconfig y Deploy
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
+          kubectl apply -f ./infraestructura/namespace.yaml
+          kubectl apply -f ./infraestructura/backend-secret.yaml
+          kubectl apply -f ./back-Despachos_SpringBoot/k8s/
+          kubectl set image deployment/backend-despachos backend-despachos=$REGISTRY/$ECR_DESPACHOS_REPO:$IMAGE_TAG -n $NAMESPACE
+          kubectl rollout status deployment/backend-despachos -n $NAMESPACE --timeout=120s
+
+  # Job 2: Build y Deploy de Ventas (Solo si cambió su carpeta)
+  deploy-ventas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurar credenciales AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::<AWS_ACCOUNT_ID>:role/github-actions-eks-deploy
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Login en Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build y push imagen Backend Ventas
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $REGISTRY/$ECR_VENTAS_REPO:$IMAGE_TAG ./back-Ventas_SpringBoot
+          docker push $REGISTRY/$ECR_VENTAS_REPO:$IMAGE_TAG
+      - name: Actualizar kubeconfig y Deploy
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
+          kubectl apply -f ./infraestructura/namespace.yaml
+          kubectl apply -f ./infraestructura/backend-secret.yaml
+          kubectl apply -f ./back-Ventas_SpringBoot/k8s/
+          kubectl set image deployment/backend-ventas backend-ventas=$REGISTRY/$ECR_VENTAS_REPO:$IMAGE_TAG -n $NAMESPACE
+          kubectl rollout status deployment/backend-ventas -n $NAMESPACE --timeout=120s
+
+  # Job 3: Build y Deploy de Frontend (Solo si cambió su carpeta)
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurar credenciales AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::<AWS_ACCOUNT_ID>:role/github-actions-eks-deploy
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Login en Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build y push imagen Frontend
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $REGISTRY/$ECR_FRONTEND_REPO:$IMAGE_TAG ./front_despacho
+          docker push $REGISTRY/$ECR_FRONTEND_REPO:$IMAGE_TAG
+      - name: Actualizar kubeconfig y Deploy
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
+          kubectl apply -f ./front_despacho/k8s/
+          kubectl set image deployment/frontend frontend=$REGISTRY/$ECR_FRONTEND_REPO:$IMAGE_TAG -n $NAMESPACE
+          kubectl rollout status deployment/frontend -n $NAMESPACE --timeout=120s
+
+  # Job 4: Aplicar Ingress y HPAs globales
+  deploy-infraestructura:
+    needs: [deploy-despachos, deploy-ventas, deploy-frontend]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurar credenciales AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::<AWS_ACCOUNT_ID>:role/github-actions-eks-deploy
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Actualizar Ingress y HPAs
+        run: |
+          aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
+          kubectl apply -f ./infraestructura/ingress-alb.yaml
+          kubectl apply -f ./infraestructura/hpa-despachos.yaml
+          kubectl apply -f ./infraestructura/hpa-ventas.yaml
+          kubectl apply -f ./infraestructura/hpa-frontend.yaml

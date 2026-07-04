@@ -1,0 +1,23 @@
+# Archivos de configuración del asistente e ingeniería de prompts
+.agents/
+guiaprompt.html
+Respuesta_Arquitectura_EKS_Innovatech.md
+Guia_Despliegue_Paso_A_Paso_EKS_Innovatech.md
+Reporte_Auditoria_Manifiestos.md
+Arquitectura_Orquestacion_EKS_Innovatech.md
+*.md.tmp
+
+# Archivos temporales de credenciales e IAM local
+iam_policy.json
+github-trust-policy.json
+
+# Compilación y dependencias de código fuente
+node_modules/
+dist/
+target/
+*.jar
+*.class
+.mvn/
+.DS_Store
+Thumbs.db
+*.log

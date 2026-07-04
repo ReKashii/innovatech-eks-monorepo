@@ -1,0 +1,43 @@
+# eks-cluster-config.yaml (eksctl)
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: innovatech-cluster
+  region: us-east-1
+  version: "1.29"
+
+vpc:
+  cidr: "10.0.0.0/16"
+  nat:
+    gateway: Single
+  subnets:
+    public:
+      us-east-1a: { cidr: "10.0.1.0/24" }
+      us-east-1b: { cidr: "10.0.2.0/24" }
+    private:
+      us-east-1a: { cidr: "10.0.11.0/24" }
+      us-east-1b: { cidr: "10.0.12.0/24" }
+
+iam:
+  withOIDC: true
+
+managedNodeGroups:
+  - name: innovatech-nodes
+    instanceType: t3.medium
+    minSize: 2
+    maxSize: 6
+    desiredCapacity: 2
+    privateNetworking: true
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+addons:
+  - name: vpc-cni
+  - name: coredns
+  - name: kube-proxy
+  - name: aws-ebs-csi-driver

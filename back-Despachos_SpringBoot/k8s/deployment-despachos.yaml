@@ -1,0 +1,80 @@
+# back-Despachos_SpringBoot/k8s/deployment-despachos.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-despachos
+  namespace: innovatech
+  labels:
+    app: backend-despachos
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend-despachos
+  template:
+    metadata:
+      labels:
+        app: backend-despachos
+    spec:
+      containers:
+        - name: backend-despachos
+          image: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/innovatech-backend-despachos:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "8080"
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: DB_HOST
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: DB_PASSWORD
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: API_KEY
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: despachos-service
+  namespace: innovatech
+spec:
+  type: ClusterIP
+  selector:
+    app: backend-despachos
+  ports:
+    - port: 80
+      targetPort: 8080
