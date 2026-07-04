@@ -14,9 +14,9 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  ECR_DESPACHOS_REPO: innovatech-backend-despachos
-  ECR_VENTAS_REPO: innovatech-backend-ventas
-  ECR_FRONTEND_REPO: innovatech-frontend
+  ECR_DESPACHOS_REPO: back-despachos-repo
+  ECR_VENTAS_REPO: back-ventaas-repo
+  ECR_FRONTEND_REPO: frontend-repo
   EKS_CLUSTER_NAME: innovatech-cluster
   NAMESPACE: innovatech
 
