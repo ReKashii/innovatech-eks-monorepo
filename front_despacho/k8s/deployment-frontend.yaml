@@ -18,26 +18,32 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/frontend-repo:latest
+          image: 327059963864.dkr.ecr.us-east-1.amazonaws.com/frontend-repo:latest
           ports:
             - containerPort: 80
           env:
-            - name: DESPACHOS_URL
+            - name: VITE_DESPACHOS_API_URL
               value: "http://despachos-service.innovatech.svc.cluster.local"
-            - name: VENTAS_URL
+            - name: VITE_VENTAS_API_URL
               value: "http://ventas-service.innovatech.svc.cluster.local"
           resources:
             requests:
-              cpu: "200m"
+              cpu: "100m"
               memory: "128Mi"
             limits:
-              cpu: "400m"
+              cpu: "250m"
               memory: "256Mi"
           readinessProbe:
             httpGet:
               path: /
               port: 80
             initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 15
             periodSeconds: 10
 ---
 apiVersion: v1
