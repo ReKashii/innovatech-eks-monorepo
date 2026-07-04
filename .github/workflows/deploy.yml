@@ -47,7 +47,7 @@ jobs:
         run: |
           docker build -t $REGISTRY/$ECR_DESPACHOS_REPO:$IMAGE_TAG ./back-Despachos_SpringBoot
           docker push $REGISTRY/$ECR_DESPACHOS_REPO:$IMAGE_TAG
-      - name: Actualizar kubeconfig y Deploy
+      - name: Actualizar kubeconfig y Deploy Despachos
         env:
           REGISTRY: ${{ steps.ecr-login.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
@@ -57,7 +57,22 @@ jobs:
           kubectl apply -f ./infraestructura/backend-secret.yaml
           kubectl apply -f ./back-Despachos_SpringBoot/k8s/
           kubectl set image deployment/backend-despachos backend-despachos=$REGISTRY/$ECR_DESPACHOS_REPO:$IMAGE_TAG -n $NAMESPACE
-          kubectl rollout status deployment/backend-despachos -n $NAMESPACE --timeout=180s
+
+          if ! kubectl rollout status deployment/backend-despachos -n $NAMESPACE --timeout=300s; then
+            echo "========== ROLLOUT FAILED: DUMPING DIAGNOSTICS FOR DESPACHOS =========="
+            kubectl get pods -n $NAMESPACE -o wide
+            kubectl describe deployment backend-despachos -n $NAMESPACE
+            PODS=$(kubectl get pods -n $NAMESPACE --no-headers -o custom-columns=":metadata.name" | grep backend-despachos || true)
+            for p in $PODS; do
+              echo "===== Describe pod: $p ====="
+              kubectl describe pod $p -n $NAMESPACE || true
+              echo "===== Logs pod: $p ====="
+              kubectl logs $p -n $NAMESPACE --all-containers --tail=200 || true
+              echo "===== Previous logs pod: $p ====="
+              kubectl logs $p -n $NAMESPACE --all-containers --previous --tail=200 || true
+            done
+            exit 1
+          fi
 
   # Job 2: Build y Deploy de Ventas (Solo si cambió su carpeta)
   deploy-ventas:
@@ -81,7 +96,7 @@ jobs:
         run: |
           docker build -t $REGISTRY/$ECR_VENTAS_REPO:$IMAGE_TAG ./back-Ventas_SpringBoot
           docker push $REGISTRY/$ECR_VENTAS_REPO:$IMAGE_TAG
-      - name: Actualizar kubeconfig y Deploy
+      - name: Actualizar kubeconfig y Deploy Ventas
         env:
           REGISTRY: ${{ steps.ecr-login.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
@@ -91,7 +106,22 @@ jobs:
           kubectl apply -f ./infraestructura/backend-secret.yaml
           kubectl apply -f ./back-Ventas_SpringBoot/k8s/
           kubectl set image deployment/backend-ventas backend-ventas=$REGISTRY/$ECR_VENTAS_REPO:$IMAGE_TAG -n $NAMESPACE
-          kubectl rollout status deployment/backend-ventas -n $NAMESPACE --timeout=180s
+
+          if ! kubectl rollout status deployment/backend-ventas -n $NAMESPACE --timeout=300s; then
+            echo "========== ROLLOUT FAILED: DUMPING DIAGNOSTICS FOR VENTAS =========="
+            kubectl get pods -n $NAMESPACE -o wide
+            kubectl describe deployment backend-ventas -n $NAMESPACE
+            PODS=$(kubectl get pods -n $NAMESPACE --no-headers -o custom-columns=":metadata.name" | grep backend-ventas || true)
+            for p in $PODS; do
+              echo "===== Describe pod: $p ====="
+              kubectl describe pod $p -n $NAMESPACE || true
+              echo "===== Logs pod: $p ====="
+              kubectl logs $p -n $NAMESPACE --all-containers --tail=200 || true
+              echo "===== Previous logs pod: $p ====="
+              kubectl logs $p -n $NAMESPACE --all-containers --previous --tail=200 || true
+            done
+            exit 1
+          fi
 
   # Job 3: Build y Deploy de Frontend (Solo si cambió su carpeta)
   deploy-frontend:
@@ -115,7 +145,7 @@ jobs:
         run: |
           docker build -t $REGISTRY/$ECR_FRONTEND_REPO:$IMAGE_TAG ./front_despacho
           docker push $REGISTRY/$ECR_FRONTEND_REPO:$IMAGE_TAG
-      - name: Actualizar kubeconfig y Deploy
+      - name: Actualizar kubeconfig y Deploy Frontend
         env:
           REGISTRY: ${{ steps.ecr-login.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
@@ -124,7 +154,22 @@ jobs:
           kubectl apply -f ./infraestructura/namespace.yaml
           kubectl apply -f ./front_despacho/k8s/
           kubectl set image deployment/frontend frontend=$REGISTRY/$ECR_FRONTEND_REPO:$IMAGE_TAG -n $NAMESPACE
-          kubectl rollout status deployment/frontend -n $NAMESPACE --timeout=180s
+
+          if ! kubectl rollout status deployment/frontend -n $NAMESPACE --timeout=300s; then
+            echo "========== ROLLOUT FAILED: DUMPING DIAGNOSTICS FOR FRONTEND =========="
+            kubectl get pods -n $NAMESPACE -o wide
+            kubectl describe deployment frontend -n $NAMESPACE
+            PODS=$(kubectl get pods -n $NAMESPACE --no-headers -o custom-columns=":metadata.name" | grep frontend || true)
+            for p in $PODS; do
+              echo "===== Describe pod: $p ====="
+              kubectl describe pod $p -n $NAMESPACE || true
+              echo "===== Logs pod: $p ====="
+              kubectl logs $p -n $NAMESPACE --all-containers --tail=200 || true
+              echo "===== Previous logs pod: $p ====="
+              kubectl logs $p -n $NAMESPACE --all-containers --previous --tail=200 || true
+            done
+            exit 1
+          fi
 
   # Job 4: Aplicar Ingress y HPAs globales
   deploy-infraestructura:
