@@ -17,7 +17,7 @@ env:
   ECR_DESPACHOS_REPO: back-despachos-repo
   ECR_VENTAS_REPO: back-ventaas-repo
   ECR_FRONTEND_REPO: frontend-repo
-  EKS_CLUSTER_NAME: innovatech-cluster
+  EKS_CLUSTER_NAME: Innovatech-eks
   NAMESPACE: innovatech
 
 permissions:
