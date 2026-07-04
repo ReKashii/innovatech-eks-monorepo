@@ -57,7 +57,7 @@ jobs:
           kubectl apply -f ./infraestructura/backend-secret.yaml
           kubectl apply -f ./back-Despachos_SpringBoot/k8s/
           kubectl set image deployment/backend-despachos backend-despachos=$REGISTRY/$ECR_DESPACHOS_REPO:$IMAGE_TAG -n $NAMESPACE
-          kubectl rollout status deployment/backend-despachos -n $NAMESPACE --timeout=120s
+          kubectl rollout status deployment/backend-despachos -n $NAMESPACE --timeout=180s
 
   # Job 2: Build y Deploy de Ventas (Solo si cambió su carpeta)
   deploy-ventas:
@@ -91,7 +91,7 @@ jobs:
           kubectl apply -f ./infraestructura/backend-secret.yaml
           kubectl apply -f ./back-Ventas_SpringBoot/k8s/
           kubectl set image deployment/backend-ventas backend-ventas=$REGISTRY/$ECR_VENTAS_REPO:$IMAGE_TAG -n $NAMESPACE
-          kubectl rollout status deployment/backend-ventas -n $NAMESPACE --timeout=120s
+          kubectl rollout status deployment/backend-ventas -n $NAMESPACE --timeout=180s
 
   # Job 3: Build y Deploy de Frontend (Solo si cambió su carpeta)
   deploy-frontend:
@@ -124,7 +124,7 @@ jobs:
           kubectl apply -f ./infraestructura/namespace.yaml
           kubectl apply -f ./front_despacho/k8s/
           kubectl set image deployment/frontend frontend=$REGISTRY/$ECR_FRONTEND_REPO:$IMAGE_TAG -n $NAMESPACE
-          kubectl rollout status deployment/frontend -n $NAMESPACE --timeout=120s
+          kubectl rollout status deployment/frontend -n $NAMESPACE --timeout=180s
 
   # Job 4: Aplicar Ingress y HPAs globales
   deploy-infraestructura:
