@@ -1,0 +1,13 @@
+# Stage 1: Build Java Application
+FROM maven:3.9-eclipse-temurin-17 AS builder
+WORKDIR /app
+COPY Springboot-API-REST/pom.xml .
+COPY Springboot-API-REST/src ./src
+RUN mvn clean package -DskipTests
+
+# Stage 2: Runtime Image
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
