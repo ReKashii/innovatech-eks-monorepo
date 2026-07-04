@@ -33,7 +33,7 @@ jobs:
       - name: Configurar credenciales AWS (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::<AWS_ACCOUNT_ID>:role/github-actions-eks-deploy
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-eks-deploy
           aws-region: ${{ env.AWS_REGION }}
       - name: Login en Amazon ECR
         id: ecr-login
@@ -65,7 +65,7 @@ jobs:
       - name: Configurar credenciales AWS (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::<AWS_ACCOUNT_ID>:role/github-actions-eks-deploy
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-eks-deploy
           aws-region: ${{ env.AWS_REGION }}
       - name: Login en Amazon ECR
         id: ecr-login
@@ -97,7 +97,7 @@ jobs:
       - name: Configurar credenciales AWS (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::<AWS_ACCOUNT_ID>:role/github-actions-eks-deploy
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-eks-deploy
           aws-region: ${{ env.AWS_REGION }}
       - name: Login en Amazon ECR
         id: ecr-login
@@ -129,7 +129,7 @@ jobs:
       - name: Configurar credenciales AWS (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::<AWS_ACCOUNT_ID>:role/github-actions-eks-deploy
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-eks-deploy
           aws-region: ${{ env.AWS_REGION }}
       - name: Actualizar Ingress y HPAs
         run: |
