@@ -55,6 +55,7 @@ jobs:
           aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
           kubectl apply -f ./infraestructura/namespace.yaml
           kubectl apply -f ./infraestructura/backend-secret.yaml
+          kubectl apply -f ./infraestructura/mysql-deployment.yaml
           kubectl apply -f ./back-Despachos_SpringBoot/k8s/
           kubectl set image deployment/backend-despachos backend-despachos=$REGISTRY/$ECR_DESPACHOS_REPO:$IMAGE_TAG -n $NAMESPACE
           kubectl rollout status deployment/backend-despachos -n $NAMESPACE --timeout=180s
@@ -89,6 +90,7 @@ jobs:
           aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
           kubectl apply -f ./infraestructura/namespace.yaml
           kubectl apply -f ./infraestructura/backend-secret.yaml
+          kubectl apply -f ./infraestructura/mysql-deployment.yaml
           kubectl apply -f ./back-Ventas_SpringBoot/k8s/
           kubectl set image deployment/backend-ventas backend-ventas=$REGISTRY/$ECR_VENTAS_REPO:$IMAGE_TAG -n $NAMESPACE
           kubectl rollout status deployment/backend-ventas -n $NAMESPACE --timeout=180s
